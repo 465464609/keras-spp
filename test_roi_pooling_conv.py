@@ -1,7 +1,7 @@
-import numpy as np
+import numpy as np #数学计算库，用于大型矩阵操作
 from keras.layers import Input
 from keras.models import Model
-from RoiPoolingConv import RoiPoolingConv
+from RoiPoolingConv import RoiPoolingConv #可以直接调用文件放在同一个目录下
 import keras.backend as K
 import pdb
 dim_ordering = K.image_dim_ordering()
@@ -16,11 +16,14 @@ if dim_ordering == 'tf':
 elif dim_ordering == 'th':
 	in_img = Input(shape=(num_channels, None, None))
 
-in_roi = Input(shape=(num_rois, 4))
+in_roi = Input(shape=(num_rois, 4))#in_roi是一个（4,4）的输入值
 
-out_roi_pool = RoiPoolingConv(pooling_regions, num_rois)([in_img, in_roi])
+out_roi_pool = RoiPoolingConv(pooling_regions, num_rois)([in_img, in_roi])#第二个（）里的是Input的参数
+#out_roi_pool 为输出，如果有下一层就作为他的输入
+#中间变量可以共用一个，比如X=Dense(input);X=Dense(X);output=Dense(X)
 
 model = Model([in_img, in_roi], out_roi_pool)
+#一次性完成模型建立，第一个参数为输入，第二个为输出
 model.summary()
 
 model.compile(loss='mse', optimizer='sgd')
@@ -28,6 +31,8 @@ model.compile(loss='mse', optimizer='sgd')
 for img_size in [32]:
 	if dim_ordering == 'th':
 		X_img = np.random.rand(1, num_channels, img_size, img_size)
+		#创建一个给定类型的数组，将其填充在一个均匀分布的随机样本[0, 1)中
+		#返回的是随机数。类型为（）里描述的类型
 		row_length = [float(X_img.shape[2]) / pooling_regions]
 		col_length = [float(X_img.shape[3]) / pooling_regions]
 	elif dim_ordering == 'tf':
@@ -39,9 +44,9 @@ for img_size in [32]:
 	X_roi = np.array([[0, 0, img_size/2, img_size/2],
 	                  [0, img_size/2, img_size/2, img_size/2],
 	                  [img_size/2, 0, img_size/2, img_size/2],
-	                  [img_size/2, img_size/2, img_size/2, img_size/2]])
+	                  [img_size/2, img_size/2, img_size/2, img_size/2]])#一串放置ROI的数组，后期可以由selective search或者SLIC获得
 
-	X_roi = np.reshape(X_roi, (1, num_rois, 4))
+	X_roi = np.reshape(X_roi, (1, num_rois, 4))#讲X_roi reshape 成一个（1，num_rois,4）的数组？？
 
 	Y = model.predict([X_img, X_roi])
 
